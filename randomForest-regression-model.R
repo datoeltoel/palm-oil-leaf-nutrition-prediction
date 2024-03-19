@@ -35,8 +35,8 @@ setwd("D:/Ziy/Course GIS & RS/Drone/RFR")
 get_nutrition_dataset <- function(){
   dataset <- readxl::read_excel("hasil_nilai.xlsx")
   new_dataset <- dataset %>% dplyr::select(
-    N, P, K, Mg, rata_rata_ndvi, rata_rata_ndre,
-    rata_rata_savi, rata_rata_arvi, rata_rata_gndvi
+    N, P, K, Mg, ndvi, ndre,
+    savi, arvi, gndvi
   ) %>% mutate()
 }
 
