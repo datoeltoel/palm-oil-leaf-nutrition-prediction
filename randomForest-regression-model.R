@@ -1,14 +1,12 @@
 # -------------------------------------------------------------------------
 # title       : Using Random Forest Regression for Estimate
 #               Leaf Nutritions of Oil Palm Based on UAV Imagery
-# data source : https://github.com/datoeltoel/palm-oil-leaf-nutrition-randomForest-model/blob/main/NDRE.csv
-#               https://github.com/datoeltoel/palm-oil-leaf-nutrition-randomForest-model/blob/main/NDVI.csv
-#               https://github.com/datoeltoel/palm-oil-leaf-nutrition-randomForest-model/blob/main/SAVI.csv
+# data source : 
 # author      : Ziyadatul Hikmah 
-# date        : 21/02/2024
+# date        : 01/03/2024
 # -------------------------------------------------------------------------
 
-# install and load packages -----------------------------------------------
+# INSTALL AND LOAD PACKAGES  ----------------------------------------------
 # libraries we need
 libs <- c("randomForest", # for build randomForest model
           "tidyverse",    # handling and visualization data
@@ -29,176 +27,128 @@ if(any(installed_libs == F)) {
 # load packages
 invisible(lapply(libs, library, character.only = T))
 
-# set working directory ---------------------------------------------------
+# SET WORKING DIRECTORY ---------------------------------------------------
 setwd("D:/Ziy/Course GIS & RS/Drone/RFR")
 
-# importing dataset into R ------------------------------------------------
-# NDVI dataset
-ndvi_dataset <- readr::read_csv("NDVI.csv")
+# IMPORTING DATA ----------------------------------------------------------
+# dataset
+get_nutrition_dataset <- function(){
+  dataset <- readxl::read_excel("hasil_nilai.xlsx")
+  new_dataset <- dataset %>% dplyr::select(
+    N, P, K, Mg, rata_rata_ndvi, rata_rata_ndre,
+    rata_rata_savi, rata_rata_arvi, rata_rata_gndvi
+  ) %>% mutate()
+}
 
-# NDRE dataset
-ndre_dataset <- readr::read_csv("NDRE.csv")
+nutrition_data <- get_nutrition_dataset()
+new_colnames <- c("N", "P","K","Mg","NDVI","NDRE","SAVI","ARVI","GNDVI")
+colnames(nutrition_data) <- new_colnames
 
-# SAVI dataset
-savi_dataset <- readr::read_csv("SAVI.csv")
-
-# split data  -------------------------------------------------------------
+# SPLIT DATA --------------------------------------------------------------
 set.seed(500)
 
-# split NDVI dataset
-trainSamplesNDVI <- sample(1:nrow(ndvi_dataset), 0.75*nrow(ndvi_dataset))
-trainDatNDVI <- ndvi_dataset[trainSamplesNDVI, ]
-testDatNDVI <- ndvi_dataset[-trainSamplesNDVI, ]
+# split dataset
+trainSamples <- sample(1:nrow(nutrition_data), 0.75*nrow(nutrition_data))
+trainDat <- nutrition_data[trainSamples, ]
+testDat <- nutrition_data[-trainSamples, ]
 
-# split NDRE dataset
-trainSamplesNDRE <- sample(1:nrow(ndre_dataset), 0.75*nrow(ndre_dataset))
-trainDatNDRE <- ndre_dataset[trainSamplesNDRE, ]
-testDatNDRE <- ndre_dataset[-trainSamplesNDRE, ]
-
-# split SAVI dataset
-trainSamplesSAVI <- sample(1:nrow(savi_dataset), 0.75*nrow(savi_dataset))
-trainDatSAVI <- savi_dataset[trainSamplesSAVI, ]
-testDatSAVI <- savi_dataset[-trainSamplesSAVI, ]
-
-# visualize relationships -------------------------------------------------
-featurePlot(x = trainDatNDVI[, c("N","P","K","Mg","NDVI")], 
-            y = factor(trainDatNDVI$Block), 
+# VISUALIZED RELATIONSHIPS ------------------------------------------------
+featurePlot(x = trainDat[, c("N","P","K","Mg","NDVI")], 
+            y = factor(trainDat$Block), 
             plot = "pairs",
             auto.key = list(columns = 5))
 
-# build random forest regression model ------------------------------------
+# BUILD RANDOM FOREST REGRESSION MODEL  -----------------------------------
 # define variable as independent and dependent variables
 varInd <- c("NDVI","NDRE","SAVI") # independent variables
 varDep <- c("N","P","K","Mg")     # dependent variables
 
-# NDVI RFR
-ndviRFR <- randomForest::randomForest(
-  NDVI ~ N + P + K + Mg,
-  data = trainDatNDVI,
+# N RFR
+N_RFR <- randomForest::randomForest(
+  N ~ NDVI + NDRE + SAVI + ARVI + GNDVI,
+  data = trainDat,
   importance = T,
   ntree = 500,
-  mtry = 2
+  mtry = 3
 )
 
-print(ndviRFR)      # randomForest model print
-plot(ndviRFR)       # randomForest model plot
-varImpPlot(ndviRFR) # variable importance plot
+print(N_RFR)      # randomForest model print
+plot(N_RFR)       # randomForest model plot
+varImpPlot(N_RFR) # variable importance plot
 
-# NDRE RFR
-ndreRFR <- randomForest::randomForest(
-  NDRE ~ N + P + K + Mg,
-  data = trainDatNDRE,
+# P RFR
+P_RFR <- randomForest::randomForest(
+  P ~ NDVI + NDRE + SAVI + ARVI + GNDVI,
+  data = trainDat,
   importance = T,
   ntree = 500,
-  mtry = 2
+  mtry = 3
 )
 
-print(ndreRFR)      # randomForest model print
-plot(ndreRFR)       # randomForest model plot
-varImpPlot(ndreRFR) # variable importance plot
+print(P_RFR)      # randomForest model print
+plot(P_RFR)       # randomForest model plot
+varImpPlot(P_RFR) # variable importance plot
 
-# NDVI RFR
-saviRFR <- randomForest::randomForest(
-  SAVI ~ N + P + K + Mg,
-  data = trainDatSAVI,
+# K RFR
+K_RFR <- randomForest::randomForest(
+  K ~ NDVI + NDRE + SAVI + ARVI + GNDVI,
+  data = trainDat,
   importance = T,
   ntree = 500,
-  mtry = 2
+  mtry = 3
 )
 
-print(saviRFR)      # randomForest model print
-plot(saviRFR)       # randomForest model plot
-varImpPlot(saviRFR) # variable importance plot
+print(K_RFR)      # randomForest model print
+plot(K_RFR)       # randomForest model plot
+varImpPlot(K_RFR) # variable importance plot
 
-# model prediction --------------------------------------------------------
-# NDVI RFR prediction
-ndviPred <- predict(ndviRFR, testDatNDVI)
+# Mg RFR
+Mg_RFR <- randomForest::randomForest(
+  Mg ~ NDVI + NDRE + SAVI + ARVI + GNDVI,
+  data = trainDat,
+  importance = T,
+  ntree = 500,
+  mtry = 3
+)
 
-# NDRE RFR prediction
-ndrePred <- predict(ndreRFR, testDatNDRE)
+print(Mg_RFR)      # randomForest model print
+plot(Mg_RFR)       # randomForest model plot
+varImpPlot(Mg_RFR) # variable importance plot
 
-# SAVI RFR prediction
-saviPred <- predict(saviRFR, testDatSAVI)
+# MODEL PREDICTION --------------------------------------------------------
+N_Pred <- predict(N_RFR, testDat)
+P_Pred <- predict(P_RFR, testDat)
+K_Pred <- predict(K_RFR, testDat)
+Mg_Pred <- predict(Mg_RFR, testDat)
 
-# model validation --------------------------------------------------------
-# NDVI RFR validation -----------------------------------------------------
+# MODEL VALIDATION --------------------------------------------------------
+# The lower value of RMSE preferred the better model performance, conversely, 
+# the higher value of R2 (closer to 1) shows that the regression line fits the
+# data well and the model performance is better 
+
 # 1. RMSE: Root Mean Squared Error
-rmseNDVI_N <- caret::RMSE(ndviPred, as.numeric(testDatNDVI$N))
-rmseNDVI_P <- caret::RMSE(ndviPred, as.numeric(testDatNDVI$P))
-rmseNDVI_K <- caret::RMSE(ndviPred, as.numeric(testDatNDVI$K))
-rmseNDVI_Mg <- caret::RMSE(ndviPred, as.numeric(testDatNDVI$Mg))
+rmse_N <- caret::RMSE(N_Pred, as.numeric(testDat$N))
+rmse_P <- caret::RMSE(P_Pred, as.numeric(testDat$P))
+rmse_K <- caret::RMSE(K_Pred, as.numeric(testDat$K))
+rmse_Mg <- caret::RMSE(Mg_Pred, as.numeric(testDat$Mg))
 
-print(paste("Root Mean Squared Error (RMSE NDVI N; P; K; Mg):", rmseNDVI_N,
-            ";", rmseNDVI_P,
-            ";", rmseNDVI_K,
-            ";", rmseNDVI_Mg
-))
+print(paste("RMSE N; P; K; Mg:", rmse_N,
+            ";", rmse_P,
+            ";", rmse_K,
+            ";", rmse_Mg))
 
 # 2. R2: R-Squared
-R2NDVI_N <- caret::R2(ndviPred, as.numeric(testDatNDVI$N))
-R2NDVI_P <- caret::R2(ndviPred, as.numeric(testDatNDVI$P))
-R2NDVI_K <- caret::R2(ndviPred, as.numeric(testDatNDVI$K))
-R2NDVI_Mg <- caret::R2(ndviPred, as.numeric(testDatNDVI$Mg))
+R2_N <- caret::R2(N_Pred, as.numeric(testDat$N))
+R2_P <- caret::R2(P_Pred, as.numeric(testDat$P))
+R2_K <- caret::R2(K_Pred, as.numeric(testDat$K))
+R2_Mg <- caret::R2(Mg_Pred, as.numeric(testDat$Mg))
 
-print(paste("Coeficient Determination (R-squared NDVI N; P; K; Mg):", R2NDVI_N,
-            ";", R2NDVI_P,
-            ";", R2NDVI_K,
-            ";", R2NDVI_Mg
-))
-
-# NDRE RFR validation -----------------------------------------------------
-# 1. RMSE: Root Mean Squared Error
-rmseNDRE_N <- caret::RMSE(ndrePred, as.numeric(testDatNDRE$N))
-rmseNDRE_P <- caret::RMSE(ndrePred, as.numeric(testDatNDRE$P))
-rmseNDRE_K <- caret::RMSE(ndrePred, as.numeric(testDatNDRE$K))
-rmseNDRE_Mg <- caret::RMSE(ndrePred, as.numeric(testDatNDRE$Mg))
-
-print(paste("Root Mean Squared Error (RMSE NDRE N; P; K; Mg):", rmseNDRE_N,
-            ";", rmseNDRE_P,
-            ";", rmseNDRE_K,
-            ";", rmseNDRE_Mg
-            ))
-
-# 2. R2: R-Squared 
-R2NDRE_N <- caret::R2(ndrePred, as.numeric(testDatNDRE$N))
-R2NDRE_P <- caret::R2(ndrePred, as.numeric(testDatNDRE$P))
-R2NDRE_K <- caret::R2(ndrePred, as.numeric(testDatNDRE$K))
-R2NDRE_Mg <- caret::R2(ndrePred, as.numeric(testDatNDRE$Mg))
-
-print(paste("Coeficient Determination (R-squared NDRE N; P; K; Mg):", R2NDRE_N,
-            ";", R2NDRE_P,
-            ";", R2NDRE_K,
-            ";", R2NDRE_Mg
-))
-
-# SAVI RFR validation -----------------------------------------------------
-# 1. RMSE: Root Mean Squared Error
-rmseSAVI_N <- caret::RMSE(saviPred, as.numeric(testDatSAVI$N))
-rmseSAVI_P <- caret::RMSE(saviPred, as.numeric(testDatSAVI$P))
-rmseSAVI_K <- caret::RMSE(saviPred, as.numeric(testDatSAVI$K))
-rmseSAVI_Mg <- caret::RMSE(saviPred, as.numeric(testDatSAVI$Mg))
-
-print(paste("Root Mean Squared Error (RMSE SAVI N; P; K; Mg):", rmseSAVI_N,
-            ";", rmseSAVI_P,
-            ";", rmseSAVI_K,
-            ";", rmseSAVI_Mg
-))
-
-# 2. R2: R-Squared
-R2SAVI_N <- caret::R2(saviPred, as.numeric(testDatSAVI$N))
-R2SAVI_P <- caret::R2(saviPred, as.numeric(testDatSAVI$P))
-R2SAVI_K <- caret::R2(saviPred, as.numeric(testDatSAVI$K))
-R2SAVI_Mg <- caret::R2(saviPred, as.numeric(testDatSAVI$Mg))
-
-print(paste("Coeficient Determination (R-squared SAVI N; P; K; Mg):", R2SAVI_N,
-            ";", R2SAVI_P,
-            ";", R2SAVI_K,
-            ";", R2SAVI_Mg
-            ))
+print(paste("R2 N; P; K; Mg:", R2_N,
+            ";", R2_P,
+            ";", R2_K,
+            ";", R2_Mg))
 
 # done !!! ----------------------------------------------------------------
-
-
 
 
 
