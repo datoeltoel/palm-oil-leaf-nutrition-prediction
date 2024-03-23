@@ -1,7 +1,7 @@
 # -------------------------------------------------------------------------
 # title       : Using Random Forest Regression for Estimate
 #               Leaf Nutritions of Oil Palm Based on UAV Imagery
-# data source : 
+# data source : https://github.com/datoeltoel/palm-oil-leaf-nutrition-prediction/blob/main/leaf_nutrition_prediction.csv
 # author      : Ziyadatul Hikmah 
 # date        : 01/03/2024
 # -------------------------------------------------------------------------
